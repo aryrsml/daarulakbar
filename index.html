@@ -1,170 +1,397 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Hadis & Jadwal Sholat</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css">
-<script src="./tailwind.config.js"></script>
-</head>
-<body class="w-screen h-screen overflow-hidden bg-tv relative flex flex-col select-none">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <meta
+      name="description"
+      content="Jadwal sholat, kajian, dan info kegiatan Masjid Daarul Akbar. Update real-time, akses kapan saja."
+    />
+    <title>Masjid Daarul Akbar - Jadwal Sholat & Kajian</title>
+    <!-- Open Graph (buat preview pas di-share ke WA/FB/IG) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://moslem.daarulakbar.gt.tc/" />
+    <meta
+      property="og:title"
+      content="Masjid Daarul Akbar - Jadwal Sholat & Kajian"
+    />
+    <meta
+      property="og:description"
+      content="Jadwal sholat, kajian, dan info kegiatan Masjid Daarul Akbar. Update real-time, akses kapan saja."
+    />
+    <meta
+      property="og:image"
+      content="https://moslem.daarulakbar.gt.tc/template-bg.png"
+    />
+    <!-- Twitter Card (opsional, biar preview di Twitter/X juga rapi) -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Masjid Daarul Akbar - Jadwal Sholat & Kajian"
+    />
+    <meta
+      name="twitter:description"
+      content="Jadwal sholat, kajian, dan info kegiatan Masjid Daarul Akbar."
+    />
+    <meta
+      name="twitter:image"
+      content="https://moslem.daarulakbar.gt.tc/template-bg.png"
+    />
 
-  <!-- Overlay agar teks tetap terbaca tanpa menutup background masjid/lentera -->
-  <div class="absolute inset-0 bg-gradient-to-b from-black/35 via-emerald-950/18 to-black/45 pointer-events-none"></div>
+    <!-- Favicon biar tab browser ada iconnya -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Scheherazade+New:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <script src="./tailwind.config.js"></script>
+  </head>
+  <body
+    class="w-screen h-screen overflow-hidden bg-tv relative flex flex-col select-none"
+  >
+    <!-- Overlay agar teks tetap terbaca tanpa menutup background masjid/lentera -->
+    <div
+      class="absolute inset-0 bg-gradient-to-b from-black/35 via-emerald-950/18 to-black/45 pointer-events-none"
+    ></div>
 
-  <!-- HEADER TOP BAR - sesuai layout-example.jpg -->
-  <header class="relative z-10 flex items-center justify-between px-4 lg:px-8 py-2.5 lg:py-3 bg-black/28 backdrop-blur-[2px] border-b border-white/10 shrink-0">
-    <p id="hariTanggal" class="text-white text-[11px] lg:text-[13px] font-medium tracking-wide">Senin, 15 Syawal 1445 H</p>
-    <!-- hidden mobile variant kept for JS compatibility -->
-    <p id="hariTanggalMobile" class="hidden"></p>
-    <p id="tanggalFull" class="hidden"></p>
-    <p class="absolute left-1/2 -translate-x-1/2 text-white text-[11px] lg:text-[13px] font-semibold tracking-widest">MASJID DAARUL AKBAR</p>
-    <div class="flex items-center gap-1.5">
-      <p id="jamDigital" class="text-white font-black text-[13px] lg:text-[16px] tracking-tight">16:45</p>
-      <span class="text-white/90 text-[11px] lg:text-xs font-semibold">WIB</span>
-      <p id="jamDigitalMobile" class="hidden"></p>
-    </div>
-  </header>
-
-  <!-- MAIN HADIS AREA - arch gold frame seperti contoh -->
-  <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 lg:px-10 py-3 lg:py-6 overflow-hidden">
-    <!-- Badge kecil di atas card (opsional subtle) -->
-    <div class="flex items-center gap-2 mb-2 lg:mb-3">
-      <span class="bg-yellow-400 text-emerald-950 font-black text-[9px] lg:text-[10px] tracking-[0.18em] px-3 py-1 rounded-full shadow">HADIS PILIHAN</span>
-      <span id="hadisGrade" class="bg-white/15 backdrop-blur text-white font-bold text-[9px] lg:text-[10px] tracking-wide px-3 py-1 rounded-full border border-white/10">Hadis sahih</span>
-      <span id="hadisCounter" class="text-white/60 text-[10px] font-mono hidden lg:inline">1 • acak</span>
-    </div>
-
-    <!-- Card Hadis Arch -->
-    <div id="hadisCard" class="w-full max-w-[980px] hadis-arch shadow-[0_20px_60px_rgba(0,0,0,0.4)] relative overflow-hidden">
-      <!-- progress bar -->
-      <div class="absolute top-0 left-0 right-0 h-[3px] bg-black/10 z-20">
-        <div id="progressBar" class="h-full bg-gradient-to-r from-emerald-600 to-yellow-400 animate-progress" style="width:0%"></div>
-      </div>
-
-      <!-- Ornamen lentera kiri/kanan (dekor) -->
-      <div class="absolute -top-1 left-6 lg:left-10 text-yellow-600/25 text-2xl lg:text-3xl pointer-events-none select-none">☪</div>
-      <div class="absolute -top-1 right-6 lg:right-10 text-yellow-600/25 text-2xl lg:text-3xl pointer-events-none select-none">☪</div>
-
-      <!-- Inner cream -->
-      <div class="hadis-inner px-5 lg:px-12 py-6 lg:py-9 text-center relative">
-        <!-- Ornament arch top -->
-        <div class="flex items-center justify-center gap-3 mb-3 lg:mb-4 opacity-60">
-          <span class="h-px w-12 lg:w-20 bg-emerald-900/15"></span>
-          <span class="text-emerald-800/40 text-[10px]">✦ ─── ✦</span>
-          <span class="h-px w-12 lg:w-20 bg-emerald-900/15"></span>
-        </div>
-
-        <h2 id="hadisTitle" class="text-emerald-950 font-black text-[16px] lg:text-[24px] leading-[1.35] text-balance">
-          Memuat hadis...
-        </h2>
-
-        <div class="flex items-center justify-center gap-2 my-3 lg:my-4">
-          <span class="h-px w-8 lg:w-14 bg-emerald-900/10"></span>
-          <span class="w-1.5 h-1.5 rounded-full bg-yellow-500/60"></span>
-          <span class="h-px w-8 lg:w-14 bg-emerald-900/10"></span>
-        </div>
-
-        <!-- Terjemahan Indonesia only - no Arabic -->
-        <p id="hadisText" class="text-zinc-700 text-[12.5px] lg:text-[15.5px] leading-[1.75] text-center max-w-[860px] mx-auto font-medium">
-          
+    <!-- HEADER TOP BAR - sesuai layout-example.jpg -->
+    <header
+      class="relative z-10 flex items-center justify-between px-4 lg:px-8 py-2.5 lg:py-3 bg-black/28 backdrop-blur-[2px] border-b border-white/10 shrink-0"
+    >
+      <p
+        id="hariTanggal"
+        class="text-white text-[11px] lg:text-[13px] font-medium tracking-wide"
+      >
+        Senin, 15 Syawal 1445 H
+      </p>
+      <!-- hidden mobile variant kept for JS compatibility -->
+      <p id="hariTanggalMobile" class="hidden"></p>
+      <p id="tanggalFull" class="hidden"></p>
+      <p
+        class="absolute left-1/2 -translate-x-1/2 text-white text-[11px] lg:text-[13px] font-semibold tracking-widest"
+      >
+        MASJID DAARUL AKBAR
+      </p>
+      <div class="flex items-center gap-1.5">
+        <p
+          id="jamDigital"
+          class="text-white font-black text-[13px] lg:text-[16px] tracking-tight"
+        >
+          16:45
         </p>
+        <span class="text-white/90 text-[11px] lg:text-xs font-semibold"
+          >WIB</span
+        >
+        <p id="jamDigitalMobile" class="hidden"></p>
+      </div>
+    </header>
 
-        <p id="hadisAttribution" class="text-center text-emerald-800 font-bold text-[11px] lg:text-[13px] mt-4 lg:mt-5 tracking-wide">—</p>
-
-        <!-- hidden arab element kept for JS compatibility but never shown -->
-        <p id="hadisArab" class="hidden" dir="rtl"></p>
+    <!-- MAIN HADIS AREA - arch gold frame seperti contoh -->
+    <main
+      class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 lg:px-10 py-3 lg:py-6 overflow-hidden"
+    >
+      <!-- Badge kecil di atas card (opsional subtle) -->
+      <div class="flex items-center gap-2 mb-2 lg:mb-3">
+        <span
+          class="bg-yellow-400 text-emerald-950 font-black text-[9px] lg:text-[10px] tracking-[0.18em] px-3 py-1 rounded-full shadow"
+          >HADIS PILIHAN</span
+        >
+        <span
+          id="hadisGrade"
+          class="bg-white/15 backdrop-blur text-white font-bold text-[9px] lg:text-[10px] tracking-wide px-3 py-1 rounded-full border border-white/10"
+          >Hadis sahih</span
+        >
+        <span
+          id="hadisCounter"
+          class="text-white/60 text-[10px] font-mono hidden lg:inline"
+          >1 • acak</span
+        >
       </div>
 
-      <!-- Footer card tipis -->
-      <div class="bg-emerald-950 text-white flex items-center justify-between px-4 lg:px-6 py-2.5">
-        <div class="flex items-center gap-2">
-          <span class="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center text-[10px]">📖</span>
-          <div>
-            <p class="text-[8px] tracking-[0.16em] font-bold text-white/55 leading-none">SUMBER</p>
-            <p id="hadisSource" class="text-[11px] lg:text-xs font-bold leading-none mt-0.5">MyQuran • Koleksi Hadis</p>
+      <!-- Card Hadis Arch -->
+      <div
+        id="hadisCard"
+        class="w-full max-w-[980px] hadis-arch shadow-[0_20px_60px_rgba(0,0,0,0.4)] relative overflow-hidden"
+      >
+        <!-- progress bar -->
+        <div class="absolute top-0 left-0 right-0 h-[3px] bg-black/10 z-20">
+          <div
+            id="progressBar"
+            class="h-full bg-gradient-to-r from-emerald-600 to-yellow-400 animate-progress"
+            style="width: 0%"
+          ></div>
+        </div>
+
+        <!-- Ornamen lentera kiri/kanan (dekor) -->
+        <div
+          class="absolute -top-1 left-6 lg:left-10 text-yellow-600/25 text-2xl lg:text-3xl pointer-events-none select-none"
+        >
+          ☪
+        </div>
+        <div
+          class="absolute -top-1 right-6 lg:right-10 text-yellow-600/25 text-2xl lg:text-3xl pointer-events-none select-none"
+        >
+          ☪
+        </div>
+
+        <!-- Inner cream -->
+        <div
+          class="hadis-inner px-5 lg:px-12 py-6 lg:py-9 text-center relative"
+        >
+          <!-- Ornament arch top -->
+          <div
+            class="flex items-center justify-center gap-3 mb-3 lg:mb-4 opacity-60"
+          >
+            <span class="h-px w-12 lg:w-20 bg-emerald-900/15"></span>
+            <span class="text-emerald-800/40 text-[10px]">✦ ─── ✦</span>
+            <span class="h-px w-12 lg:w-20 bg-emerald-900/15"></span>
+          </div>
+
+          <h2
+            id="hadisTitle"
+            class="text-emerald-950 font-black text-[16px] lg:text-[24px] leading-[1.35] text-balance"
+          >
+            Memuat hadis...
+          </h2>
+
+          <div class="flex items-center justify-center gap-2 my-3 lg:my-4">
+            <span class="h-px w-8 lg:w-14 bg-emerald-900/10"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-yellow-500/60"></span>
+            <span class="h-px w-8 lg:w-14 bg-emerald-900/10"></span>
+          </div>
+
+          <!-- Terjemahan Indonesia only - no Arabic -->
+          <p
+            id="hadisText"
+            class="text-zinc-700 text-[12.5px] lg:text-[15.5px] leading-[1.75] text-center max-w-[860px] mx-auto font-medium"
+          ></p>
+
+          <p
+            id="hadisAttribution"
+            class="text-center text-emerald-800 font-bold text-[11px] lg:text-[13px] mt-4 lg:mt-5 tracking-wide"
+          >
+            —
+          </p>
+
+          <!-- hidden arab element kept for JS compatibility but never shown -->
+          <p id="hadisArab" class="hidden" dir="rtl"></p>
+        </div>
+
+        <!-- Footer card tipis -->
+        <div
+          class="bg-emerald-950 text-white flex items-center justify-between px-4 lg:px-6 py-2.5"
+        >
+          <div class="flex items-center gap-2">
+            <span
+              class="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center text-[10px]"
+              >📖</span
+            >
+            <div>
+              <p
+                class="text-[8px] tracking-[0.16em] font-bold text-white/55 leading-none"
+              >
+                SUMBER
+              </p>
+              <p
+                id="hadisSource"
+                class="text-[11px] lg:text-xs font-bold leading-none mt-0.5"
+              >
+                MyQuran • Koleksi Hadis
+              </p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p
+              class="text-[8px] tracking-[0.16em] font-bold text-white/55 leading-none"
+            >
+              AUTO • 10 DETIK
+            </p>
+            <p
+              class="text-[11px] font-mono font-bold mt-0.5 flex items-center gap-1.5 justify-end"
+            >
+              <span
+                class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"
+              ></span>
+              <span id="nextIn">10s</span>
+            </p>
           </div>
         </div>
-        <div class="text-right">
-          <p class="text-[8px] tracking-[0.16em] font-bold text-white/55 leading-none">AUTO • 10 DETIK</p>
-          <p class="text-[11px] font-mono font-bold mt-0.5 flex items-center gap-1.5 justify-end"><span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span> <span id="nextIn">10s</span></p>
-        </div>
       </div>
-    </div>
 
-    <p class="text-white/50 text-[10px] lg:text-[11px] mt-2.5 lg:mt-3 font-medium tracking-wide text-center">Hadis ditampilkan otomatis • Terjemahan Bahasa Indonesia • Sumber MyQuran</p>
-  </main>
+      <p
+        class="text-white/50 text-[10px] lg:text-[11px] mt-2.5 lg:mt-3 font-medium tracking-wide text-center"
+      >
+        Hadis ditampilkan otomatis • Terjemahan Bahasa Indonesia • Sumber
+        MyQuran
+      </p>
+    </main>
 
-  <!-- FOOTER JADWAL SHOLAT - style seperti contoh bawah -->
-  <footer class="relative z-10 px-3 lg:px-6 pb-3 lg:pb-4 shrink-0">
-    <div class="jadwal-footer rounded-[16px] lg:rounded-[20px] px-3 lg:px-5 py-3 lg:py-3.5 shadow-xl">
-      <div class="flex items-center justify-between mb-2.5">
-        <div class="flex items-center gap-2">
-          <span class="w-7 h-7 rounded-lg bg-yellow-400 flex items-center justify-center text-xs">🕋</span>
-          <div>
-            <p class="text-white font-black text-[11px] lg:text-xs leading-none tracking-wide">JADWAL SHOLAT</p>
-            <p id="jadwalLokasi" class="text-white/60 text-[10px] font-semibold leading-none">KOTA TANGERANG SELATAN</p>
+    <!-- FOOTER JADWAL SHOLAT - style seperti contoh bawah -->
+    <footer class="relative z-10 px-3 lg:px-6 pb-3 lg:pb-4 shrink-0">
+      <div
+        class="jadwal-footer rounded-[16px] lg:rounded-[20px] px-3 lg:px-5 py-3 lg:py-3.5 shadow-xl"
+      >
+        <div class="flex items-center justify-between mb-2.5">
+          <div class="flex items-center gap-2">
+            <span
+              class="w-7 h-7 rounded-lg bg-yellow-400 flex items-center justify-center text-xs"
+              >🕋</span
+            >
+            <div>
+              <p
+                class="text-white font-black text-[11px] lg:text-xs leading-none tracking-wide"
+              >
+                JADWAL SHOLAT
+              </p>
+              <p
+                id="jadwalLokasi"
+                class="text-white/60 text-[10px] font-semibold leading-none"
+              >
+                KOTA TANGERANG SELATAN
+              </p>
+            </div>
+          </div>
+          <div class="hidden">
+            <p
+              id="jadwalTanggal"
+              class="text-yellow-300 font-bold text-[11px] leading-none"
+            >
+              --
+            </p>
+            <p class="text-white/45 text-[10px] font-mono">WIB • MyQuran</p>
           </div>
         </div>
-        <div class="hidden">
-          <p id="jadwalTanggal" class="text-yellow-300 font-bold text-[11px] leading-none">--</p>
-          <p class="text-white/45 text-[10px] font-mono">WIB • MyQuran</p>
+
+        <div id="jadwalGrid" class="grid grid-cols-5 gap-2 lg:gap-3">
+          <!-- 5 cards injected by JS -->
+        </div>
+
+        <div
+          class="flex items-center justify-between mt-2.5 pt-2.5 border-t border-white/10"
+        >
+          <p class="text-white/45 text-[9px] lg:text-[11px] font-medium">
+            Jeda iqomah: Subuh 15m • Dzuhur/Ashar/Maghrib/Isya 10m
+          </p>
+          <p
+            id="nextPrayerInfo"
+            class="text-yellow-300 text-[10px] lg:text-xs font-bold"
+          >
+            Menuju --
+          </p>
         </div>
       </div>
+    </footer>
 
-      <div id="jadwalGrid" class="grid grid-cols-5 gap-2 lg:gap-3">
-        <!-- 5 cards injected by JS -->
+    <!-- OVERLAY IQOMAH / LURUSKAN SHAF -->
+    <div
+      id="iqomahOverlay"
+      class="fixed inset-0 z-50 hidden flex-col items-center justify-center px-8 text-center"
+    >
+      <div class="absolute inset-0 bg-emerald-950/92 backdrop-blur-[6px]"></div>
+      <div
+        class="absolute inset-0 opacity-10"
+        style="
+          background-image: url(&quot;./template-bg.png&quot;);
+          background-size: cover;
+          background-position: center;
+        "
+      ></div>
+
+      <div
+        id="iqomahState"
+        class="relative z-10 flex flex-col items-center w-full max-w-4xl"
+      >
+        <div
+          class="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-yellow-400 flex items-center justify-center shadow-[0_0_40px_rgba(250,204,21,0.5)] mb-6 animate-pulse"
+        >
+          <span class="text-3xl lg:text-4xl">🕌</span>
+        </div>
+        <p
+          class="text-yellow-300 font-black tracking-[0.22em] text-xs lg:text-sm"
+        >
+          WAKTU SHOLAT TIBA
+        </p>
+        <h2
+          id="iqomahName"
+          class="text-white font-black text-4xl lg:text-6xl mt-2 tracking-tight text-shadow"
+        >
+          DZUHUR
+        </h2>
+        <p
+          class="text-white/70 font-semibold text-sm lg:text-base mt-2 tracking-wide"
+        >
+          Menuju Iqomah
+        </p>
+        <div
+          class="mt-6 lg:mt-8 bg-white rounded-[20px] px-8 lg:px-14 py-5 lg:py-7 shadow-2xl"
+        >
+          <p
+            id="iqomahCountdown"
+            class="font-black text-emerald-950 text-5xl lg:text-7xl tabular-nums leading-none tracking-tight"
+          >
+            10:00
+          </p>
+          <p
+            class="text-zinc-500 font-bold text-xs lg:text-sm tracking-[0.18em] mt-1.5"
+          >
+            MENIT : DETIK
+          </p>
+        </div>
+        <p
+          class="text-white/60 text-xs lg:text-sm mt-6 max-w-xl leading-relaxed"
+        >
+          Segera ke masjid. Luruskan niat, sempurnakan wudhu.
+        </p>
       </div>
 
-      <div class="flex items-center justify-between mt-2.5 pt-2.5 border-t border-white/10">
-        <p class="text-white/45 text-[9px] lg:text-[11px] font-medium">Jeda iqomah: Subuh 15m • Dzuhur/Ashar/Maghrib/Isya 10m</p>
-        <p id="nextPrayerInfo" class="text-yellow-300 text-[10px] lg:text-xs font-bold">Menuju --</p>
+      <div
+        id="luruskanState"
+        class="relative z-10 hidden flex-col items-center w-full max-w-5xl"
+      >
+        <div
+          class="w-24 h-24 lg:w-28 lg:h-28 rounded-full bg-white flex items-center justify-center shadow-2xl mb-6"
+        >
+          <span class="text-4xl">🟰</span>
+        </div>
+        <h2
+          class="text-yellow-300 font-black text-3xl lg:text-5xl tracking-tight text-center leading-tight text-shadow"
+        >
+          LURUSKAN <span class="text-white">dan</span> RAPATKAN SHAF
+        </h2>
+        <div class="h-1.5 w-32 bg-yellow-400 rounded-full mt-5"></div>
+        <p class="text-white font-bold text-lg lg:text-2xl mt-6 tracking-wide">
+          صَفُّوا صُفُوفَكُمْ
+        </p>
+        <p
+          class="text-white/80 text-sm lg:text-base mt-2 max-w-2xl leading-relaxed"
+        >
+          Luruskan shaf, rapatkan barisan. Shaf yang lurus adalah kesempurnaan
+          sholat berjamaah.
+        </p>
+        <p id="luruskanTimer" class="text-white/40 font-mono text-xs mt-6">
+          --
+        </p>
       </div>
     </div>
-  </footer>
 
-  <!-- OVERLAY IQOMAH / LURUSKAN SHAF -->
-  <div id="iqomahOverlay" class="fixed inset-0 z-50 hidden flex-col items-center justify-center px-8 text-center">
-    <div class="absolute inset-0 bg-emerald-950/92 backdrop-blur-[6px]"></div>
-    <div class="absolute inset-0 opacity-10" style="background-image: url('./template-bg.png'); background-size: cover; background-position: center;"></div>
-
-    <div id="iqomahState" class="relative z-10 flex flex-col items-center w-full max-w-4xl">
-      <div class="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-yellow-400 flex items-center justify-center shadow-[0_0_40px_rgba(250,204,21,0.5)] mb-6 animate-pulse">
-        <span class="text-3xl lg:text-4xl">🕌</span>
+    <div
+      id="toast"
+      class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 hidden"
+    >
+      <div
+        class="bg-zinc-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2"
+      >
+        <span class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
+        <span id="toastMsg">--</span>
       </div>
-      <p class="text-yellow-300 font-black tracking-[0.22em] text-xs lg:text-sm">WAKTU SHOLAT TIBA</p>
-      <h2 id="iqomahName" class="text-white font-black text-4xl lg:text-6xl mt-2 tracking-tight text-shadow">DZUHUR</h2>
-      <p class="text-white/70 font-semibold text-sm lg:text-base mt-2 tracking-wide">Menuju Iqomah</p>
-      <div class="mt-6 lg:mt-8 bg-white rounded-[20px] px-8 lg:px-14 py-5 lg:py-7 shadow-2xl">
-        <p id="iqomahCountdown" class="font-black text-emerald-950 text-5xl lg:text-7xl tabular-nums leading-none tracking-tight">10:00</p>
-        <p class="text-zinc-500 font-bold text-xs lg:text-sm tracking-[0.18em] mt-1.5">MENIT : DETIK</p>
-      </div>
-      <p class="text-white/60 text-xs lg:text-sm mt-6 max-w-xl leading-relaxed">Segera ke masjid. Luruskan niat, sempurnakan wudhu.</p>
     </div>
 
-    <div id="luruskanState" class="relative z-10 hidden flex-col items-center w-full max-w-5xl">
-      <div class="w-24 h-24 lg:w-28 lg:h-28 rounded-full bg-white flex items-center justify-center shadow-2xl mb-6">
-        <span class="text-4xl">🟰</span>
-      </div>
-      <h2 class="text-yellow-300 font-black text-3xl lg:text-5xl tracking-tight text-center leading-tight text-shadow">
-        LURUSKAN <span class="text-white">dan</span> RAPATKAN SHAF
-      </h2>
-      <div class="h-1.5 w-32 bg-yellow-400 rounded-full mt-5"></div>
-      <p class="text-white font-bold text-lg lg:text-2xl mt-6 tracking-wide">صَفُّوا صُفُوفَكُمْ</p>
-      <p class="text-white/80 text-sm lg:text-base mt-2 max-w-2xl leading-relaxed">Luruskan shaf, rapatkan barisan. Shaf yang lurus adalah kesempurnaan sholat berjamaah.</p>
-      <p id="luruskanTimer" class="text-white/40 font-mono text-xs mt-6">--</p>
-    </div>
-  </div>
-
-  <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 hidden">
-    <div class="bg-zinc-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2">
-      <span class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span> <span id="toastMsg">--</span>
-    </div>
-  </div>
-
-<script src="./app.js"></script>
-</body>
+    <script src="./app.js"></script>
+  </body>
 </html>

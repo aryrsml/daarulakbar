@@ -10,6 +10,44 @@ body {
   background-repeat: no-repeat;
 }
 .text-shadow { text-shadow: 0 2px 12px rgba(0,0,0,0.6); }
+/* Background template-bg.png (class bg-tv) khusus konten MyQuran/lokal.
+   Konten Instagram (body[data-source="instagram"]) pakai background gelap polos. */
+body[data-source="instagram"] {
+  background-image: none;
+  background-color: #07130c;
+}
+/* Kartu Instagram: gambar menyesuaikan besar layar (vw/vh), caption kecil di bawah gambar */
+#igCard { width: min(980px, 94vw); }
+#igImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 50vh;
+  object-fit: contain;
+  background: rgba(0,0,0,0.35);
+}
+#igImage.hidden { display: none; }
+#igTitle { font-size: 14px; }
+#igCaption {
+  font-size: 12px;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+@media screen and (min-width: 1024px) {
+  #igImage { max-height: 54vh; }
+  #igTitle { font-size: 16px; }
+  #igCaption { font-size: 13px; }
+}
+@media screen and (max-height: 600px) {
+  #igImage { max-height: 42vh; }
+  #igCaption { -webkit-line-clamp: 3; }
+}
+@media (orientation: portrait) {
+  #igImage { max-height: 40vh; }
+}
 
 /* Kartu hadis arch emas seperti layout-example.jpg */
 .hadis-arch {

@@ -17,6 +17,11 @@
     hadisSource: document.getElementById('hadisSource'),
     hadisCounter: document.getElementById('hadisCounter'),
     hadisCard: document.getElementById('hadisCard'),
+    igCard: document.getElementById('igCard'),
+    igImage: document.getElementById('igImage'),
+    igTitle: document.getElementById('igTitle'),
+    igCaption: document.getElementById('igCaption'),
+    igMeta: document.getElementById('igMeta'),
     progressBar: document.getElementById('progressBar'),
     nextIn: document.getElementById('nextIn'),
     jadwalGrid: document.getElementById('jadwalGrid'),
@@ -179,8 +184,116 @@
     }
   }
 
+  // --- Instagram Graph API (postingan akun sendiri) ---
+  // Token dibaca dari window.IG_ACCESS_TOKEN (file config.js, tidak di-commit).
+  // Stack tetap vanilla fetch, tanpa dependency baru.
+  const IG_API_VERSION = 'v18.0';
+  const IG_MEDIA_LIMIT = 20; // 20 feed terupdate
+  const IG_CACHE_TTL = 10 * 60 * 1000; // 10 menit, hemat quota / hindari rate-limit
+  let igMediaCache = { items: [], fetchedAt: 0 };
+
+  function getIgToken(){
+    const t = (typeof window !== 'undefined' && window.IG_ACCESS_TOKEN) || '';
+    return typeof t === 'string' ? t.trim() : '';
+  }
+
+  function parseIgCaption(caption){
+    const text = String(caption || '').trim();
+    if(!text) return null;
+    const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const title = (lines[0] || text).slice(0, 120);
+    const body = lines.length > 1 ? lines.slice(1).join('\n') : text;
+    return { title, body };
+  }
+
+  async function fetchIgMediaList(){
+    const token = getIgToken();
+    if(!token) return [];
+    const now = Date.now();
+    if(igMediaCache.items.length && (now - igMediaCache.fetchedAt) < IG_CACHE_TTL){
+      return igMediaCache.items;
+    }
+    const url = `https://graph.instagram.com/${IG_API_VERSION}/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=${IG_MEDIA_LIMIT}&access_token=${encodeURIComponent(token)}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if(!res.ok) throw new Error('IG HTTP ' + res.status);
+    const json = await res.json();
+    if(json.error) throw new Error(json.error.message || 'IG error');
+    let items = Array.isArray(json.data) ? json.data.filter(d => d && d.caption) : [];
+    // pastikan 20 feed terupdate: urutkan timestamp terbaru dulu lalu potong 20
+    items.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    items = items.slice(0, IG_MEDIA_LIMIT);
+    if(items.length){
+      igMediaCache = { items, fetchedAt: now };
+    }
+    return items;
+  }
+
+  async function resolveIgImageUrl(item, token){
+    if(!item) return '';
+    // VIDEO -> pakai thumbnail; IMAGE -> media_url; CAROUSEL tanpa media_url -> ambil anak pertama
+    if(item.media_type === 'VIDEO') return item.thumbnail_url || item.media_url || '';
+    if(item.media_url) return item.media_url;
+    if(item.thumbnail_url) return item.thumbnail_url;
+    if(item.media_type === 'CAROUSEL_ALBUM' && token){
+      try {
+        const url = `https://graph.instagram.com/${IG_API_VERSION}/${item.id}/children?fields=media_url,thumbnail_url,media_type&limit=10&access_token=${encodeURIComponent(token)}`;
+        const res = await fetch(url, { cache: 'no-store' });
+        if(!res.ok) return '';
+        const json = await res.json();
+        const kids = Array.isArray(json.data) ? json.data : [];
+        const first = kids.find(c => c && (c.media_url || c.thumbnail_url)) || null;
+        if(first) return first.media_url || first.thumbnail_url || '';
+      } catch(e){ /* abaikan, tampil teks saja */ }
+    }
+    return '';
+  }
+
+  async function mapIgToHadis(item, token){
+    const parsed = parseIgCaption(item.caption);
+    if(!parsed) return null;
+    let tanggal = '';
+    try {
+      const dt = new Date(item.timestamp);
+      if(!isNaN(dt)) tanggal = `${dt.getDate()} ${BULAN_ID[dt.getMonth()]} ${dt.getFullYear()}`;
+    } catch(e){ /* abaikan */ }
+    const imageUrl = await resolveIgImageUrl(item, token);
+    return {
+      title: parsed.title,
+      hadis: parsed.body,
+      grade: 'Instagram',
+      attribution: '@masjiddarulakbar.gko',
+      arab: '',
+      source: tanggal ? `@masjiddarulakbar.gko • ${tanggal}` : '@masjiddarulakbar.gko',
+      permalink: item.permalink || '',
+      imageUrl,
+      mediaType: item.media_type || '',
+      sourceType: 'instagram'
+    };
+  }
+
+  async function fetchHadisFromInstagram(){
+    const items = await fetchIgMediaList();
+    if(!items.length) throw new Error('IG kosong');
+    const token = getIgToken();
+    // coba beberapa item acak agar tidak dapat caption kosong berulang
+    const pool = [...items].sort(() => Math.random() - 0.5).slice(0, Math.min(items.length, 5));
+    for(const item of pool){
+      const mapped = await mapIgToHadis(item, token);
+      if(mapped) return mapped;
+    }
+    throw new Error('IG caption kosong');
+  }
+
   async function fetchHadisRandom(){
-    // coba 2 endpoint, fallback ke cache lokal
+    // 1) Instagram dulu (caption utuh = teks hadis, baris pertama = title)
+    try {
+      if(getIgToken()){
+        return await fetchHadisFromInstagram();
+      }
+    } catch(e){
+      console.warn('instagram fetch gagal, lanjut MyQuran', e);
+    }
+    // 2) MyQuran (fallback)
     const endpoints = [
       //'https://api.myquran.com/v2/hadits/koleksi/acak',
       'https://api.myquran.com/v2/hadits/koleksi/random'
@@ -198,37 +311,80 @@
             grade: (d.idn && d.idn.grade) ? d.idn.grade : 'Hadis',
             attribution: (d.idn && d.idn.attribution) ? d.idn.attribution : 'MyQuran',
             arab: (d.ar && d.ar.hadis) ? d.ar.hadis : '',
-            source: `No. ${d.id || '-'} • MyQuran`
+            source: `No. ${d.id || '-'} • MyQuran`,
+            imageUrl: '',
+            mediaType: '',
+            sourceType: 'myquran'
           };
         }
       }catch(e){ /* lanjut */ }
     }
     // fallback
     const f = FALLBACK_HADIS[Math.floor(Math.random()*FALLBACK_HADIS.length)];
-    return { title: f.title, hadis: f.hadis, grade: f.grade, attribution: f.attribution, arab: f.arab, source: f.attribution };
+    return { title: f.title, hadis: f.hadis, grade: f.grade, attribution: f.attribution, arab: f.arab, source: f.attribution, imageUrl: '', mediaType: '', sourceType: 'lokal' };
+  }
+
+  function applySourceBackground(sourceType){
+    // template-bg.png (class bg-tv) khusus untuk konten MyQuran/lokal.
+    // Konten Instagram pakai background gelap polos agar gambar IG yang tampil.
+    if(sourceType === 'instagram'){
+      document.body.classList.remove('bg-tv');
+      document.body.setAttribute('data-source', 'instagram');
+    } else {
+      document.body.classList.add('bg-tv');
+      document.body.setAttribute('data-source', sourceType || 'myquran');
+    }
   }
 
   function renderHadis(h){
-    // animasi exit-enter sederhana - hanya terjemahan Indonesia, tanpa arab
-    els.hadisCard.style.opacity = '0';
-    els.hadisCard.style.transform = 'translateY(8px) scale(0.98)';
-    els.hadisCard.style.transition = 'all 220ms ease';
+    // Instagram: tampilkan igCard (gambar + caption kecil), sembunyikan hadisCard.
+    // MyQuran/lokal: tampilkan hadisCard, sembunyikan igCard.
+    const isIg = h.sourceType === 'instagram';
+    const showEl = isIg ? els.igCard : els.hadisCard;
+    const hideEl = isIg ? els.hadisCard : els.igCard;
+    if(hideEl) hideEl.classList.add('hidden');
+    if(showEl){
+      showEl.classList.remove('hidden');
+      showEl.style.opacity = '0';
+      showEl.style.transform = 'translateY(8px) scale(0.98)';
+      showEl.style.transition = 'all 220ms ease';
+    }
     setTimeout(()=>{
-      els.hadisTitle.textContent = h.title || 'Hadis';
-      //els.hadisText.textContent = h.hadis || h.title;
-      els.hadisGrade.textContent = h.grade || 'Hadis';
-      els.hadisAttribution.textContent = h.attribution ? `— ${h.attribution}` : '— MyQuran';
-      els.hadisSource.textContent = h.source || 'MyQuran';
-      // selalu sembunyikan arab sesuai permintaan - hanya terjemahan ID
-      if(els.hadisArab){
-        els.hadisArab.textContent = '';
-        els.hadisArab.classList.add('hidden');
+      if(isIg){
+        if(els.igImage){
+          if(h.imageUrl){
+            els.igImage.src = h.imageUrl;
+            els.igImage.alt = h.title || 'Postingan Instagram';
+            els.igImage.classList.remove('hidden');
+          } else {
+            els.igImage.removeAttribute('src');
+            els.igImage.classList.add('hidden');
+          }
+        }
+        if(els.igTitle) els.igTitle.textContent = h.title || '';
+        if(els.igCaption) els.igCaption.textContent = h.hadis || '';
+        if(els.igMeta) els.igMeta.textContent = h.source || '@masjiddarulakbar.gko';
+        els.hadisGrade.textContent = h.grade || 'Instagram';
+      } else {
+        els.hadisTitle.textContent = h.title || 'Hadis';
+        if(els.hadisText) els.hadisText.textContent = h.hadis || h.title || '';
+        els.hadisGrade.textContent = h.grade || 'Hadis';
+        els.hadisAttribution.textContent = h.attribution ? `— ${h.attribution}` : '— MyQuran';
+        els.hadisSource.textContent = h.source || 'MyQuran';
+        // selalu sembunyikan arab sesuai permintaan - hanya terjemahan ID
+        if(els.hadisArab){
+          els.hadisArab.textContent = '';
+          els.hadisArab.classList.add('hidden');
+        }
       }
-      els.hadisCard.style.opacity = '1';
-      els.hadisCard.style.transform = 'translateY(0) scale(1)';
+      applySourceBackground(h.sourceType);
+      if(showEl){
+        showEl.style.opacity = '1';
+        showEl.style.transform = 'translateY(0) scale(1)';
+      }
     }, 220);
     hadisIndex++;
-    if(els.hadisCounter) els.hadisCounter.textContent = `${hadisIndex} • acak`;
+    if(els.hadisCounter) els.hadisCounter.textContent = `${hadisIndex} • ${h.sourceType || 'acak'}`;
   }
 
   async function rotateHadis(){
@@ -411,5 +567,5 @@
   init();
 
   // Expose untuk debug di TV browser
-  window._signage = { fetchJadwal, rotateHadis, showIqomah, hideOverlay };
+  window._signage = { fetchJadwal, rotateHadis, fetchHadisRandom, showIqomah, hideOverlay };
 })();

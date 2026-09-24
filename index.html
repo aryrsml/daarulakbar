@@ -224,10 +224,26 @@
         </div>
       </div>
 
+      <!-- Kartu Instagram: gambar responsif + caption kecil, tanpa hadisCard -->
+      <figure
+        id="igCard"
+        class="hidden w-full shadow-[0_20px_60px_rgba(0,0,0,0.4)] rounded-2xl overflow-hidden border border-white/10 bg-black/45 backdrop-blur"
+      >
+        <img id="igImage" class="hidden" alt="Postingan Instagram" />
+        <figcaption class="px-4 lg:px-6 py-3 lg:py-4">
+          <p id="igTitle" class="text-white font-bold leading-snug"></p>
+          <p id="igCaption" class="text-white/75 mt-1.5"></p>
+          <p
+            id="igMeta"
+            class="text-yellow-300/90 text-[10px] lg:text-[11px] font-semibold mt-2 tracking-wide"
+          ></p>
+        </figcaption>
+      </figure>
+
       <p
         class="text-white/50 text-[10px] lg:text-[11px] mt-2.5 lg:mt-3 font-medium tracking-wide text-center"
       >
-        Hadis ditampilkan otomatis • Terjemahan Bahasa Indonesia • Sumber
+        Hadis & konten ditampilkan otomatis • Sumber @masjiddarulakbar.gko /
         MyQuran
       </p>
     </main>
@@ -392,6 +408,7 @@
       </div>
     </div>
 
+    <script src="./config.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

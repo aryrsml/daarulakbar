@@ -55,9 +55,9 @@
   <body
     class="w-screen h-screen overflow-hidden bg-tv relative flex flex-col select-none"
   >
-    <!-- Overlay agar teks tetap terbaca tanpa menutup background masjid/lentera -->
+    <!-- Overlay tipis: area krem arch tetap cerah, tepi gelap untuk header/footer -->
     <div
-      class="absolute inset-0 bg-gradient-to-b from-black/35 via-emerald-950/18 to-black/45 pointer-events-none"
+      class="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/30 pointer-events-none"
     ></div>
 
     <!-- HEADER TOP BAR - sesuai layout-example.jpg -->
@@ -92,160 +92,45 @@
       </div>
     </header>
 
-    <!-- MAIN HADIS AREA - arch gold frame seperti contoh -->
+    <!-- MAIN DOA AREA - teks langsung di atas template-bg.png (tanpa card) -->
     <main
-      class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 lg:px-10 py-3 lg:py-6 overflow-hidden"
+      class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 overflow-hidden"
     >
-      <!-- Badge kecil di atas card (opsional subtle) -->
-      <div class="flex items-center gap-2 mb-2 lg:mb-3">
-        <span
-          class="bg-yellow-400 text-emerald-950 font-black text-[9px] lg:text-[10px] tracking-[0.18em] px-3 py-1 rounded-full shadow"
-          >HADIS PILIHAN</span
-        >
-        <span
-          id="hadisGrade"
-          class="bg-white/15 backdrop-blur text-white font-bold text-[9px] lg:text-[10px] tracking-wide px-3 py-1 rounded-full border border-white/10"
-          >Hadis sahih</span
-        >
-        <span
-          id="hadisCounter"
-          class="text-white/60 text-[10px] font-mono hidden lg:inline"
-          >1 • acak</span
-        >
-      </div>
+      <div id="doaContent" class="doa-arch-content text-center">
+        <span id="doaBadge" class="doa-badge">DOA HARIAN</span>
 
-      <!-- Card Hadis Arch -->
-      <div
-        id="hadisCard"
-        class="w-full max-w-[980px] hadis-arch shadow-[0_20px_60px_rgba(0,0,0,0.4)] relative overflow-hidden"
-      >
-        <!-- progress bar -->
-        <div class="absolute top-0 left-0 right-0 h-[3px] bg-black/10 z-20">
-          <div
-            id="progressBar"
-            class="h-full bg-gradient-to-r from-emerald-600 to-yellow-400 animate-progress"
-            style="width: 0%"
-          ></div>
+        <h2 id="doaTitle" class="doa-title">Memuat doa...</h2>
+
+        <div class="flex items-center justify-center gap-2 my-2 lg:my-3">
+          <span class="h-px w-10 lg:w-16 bg-emerald-900/15"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-yellow-500/70"></span>
+          <span class="h-px w-10 lg:w-16 bg-emerald-900/15"></span>
         </div>
 
-        <!-- Ornamen lentera kiri/kanan (dekor) -->
-        <div
-          class="absolute -top-1 left-6 lg:left-10 text-yellow-600/25 text-2xl lg:text-3xl pointer-events-none select-none"
-        >
-          ☪
-        </div>
-        <div
-          class="absolute -top-1 right-6 lg:right-10 text-yellow-600/25 text-2xl lg:text-3xl pointer-events-none select-none"
-        >
-          ☪
+        <p id="doaArtinya" class="doa-artinya"></p>
+        <p id="doaArab" class="doa-arab" dir="rtl"></p>
+
+        <!-- Progress tipis tepat di bawah teks -->
+        <div class="doa-progress-track">
+          <div id="progressBar" class="doa-progress-fill animate-progress"></div>
         </div>
 
-        <!-- Inner cream -->
-        <div
-          class="hadis-inner px-5 lg:px-12 py-6 lg:py-9 text-center relative"
-        >
-          <!-- Ornament arch top -->
-          <div
-            class="flex items-center justify-center gap-3 mb-3 lg:mb-4 opacity-60"
-          >
-            <span class="h-px w-12 lg:w-20 bg-emerald-900/15"></span>
-            <span class="text-emerald-800/40 text-[10px]">✦ ─── ✦</span>
-            <span class="h-px w-12 lg:w-20 bg-emerald-900/15"></span>
-          </div>
-
-          <h2
-            id="hadisTitle"
-            class="text-emerald-950 font-black text-[16px] lg:text-[24px] leading-[1.35] text-balance"
-          >
-            Memuat hadis...
-          </h2>
-
-          <div class="flex items-center justify-center gap-2 my-3 lg:my-4">
-            <span class="h-px w-8 lg:w-14 bg-emerald-900/10"></span>
-            <span class="w-1.5 h-1.5 rounded-full bg-yellow-500/60"></span>
-            <span class="h-px w-8 lg:w-14 bg-emerald-900/10"></span>
-          </div>
-
-          <!-- Terjemahan Indonesia only - no Arabic -->
-          <p
-            id="hadisText"
-            class="text-zinc-700 text-[12.5px] lg:text-[15.5px] leading-[1.75] text-center max-w-[860px] mx-auto font-medium"
-          ></p>
-
-          <p
-            id="hadisAttribution"
-            class="text-center text-emerald-800 font-bold text-[11px] lg:text-[13px] mt-4 lg:mt-5 tracking-wide"
-          >
-            —
-          </p>
-
-          <!-- hidden arab element kept for JS compatibility but never shown -->
-          <p id="hadisArab" class="hidden" dir="rtl"></p>
-        </div>
-
-        <!-- Footer card tipis -->
-        <div
-          class="bg-emerald-950 text-white flex items-center justify-between px-4 lg:px-6 py-2.5"
-        >
-          <div class="flex items-center gap-2">
+        <!-- Footer tipis: sumber + timer -->
+        <div class="doa-footer">
+          <span class="flex items-center gap-1.5 min-w-0">
+            <span class="text-[10px]">📖</span>
+            <span id="doaSource" class="truncate">MyQuran</span>
+          </span>
+          <span class="flex items-center gap-1.5 shrink-0 font-mono">
             <span
-              class="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center text-[10px]"
-              >📖</span
-            >
-            <div>
-              <p
-                class="text-[8px] tracking-[0.16em] font-bold text-white/55 leading-none"
-              >
-                SUMBER
-              </p>
-              <p
-                id="hadisSource"
-                class="text-[11px] lg:text-xs font-bold leading-none mt-0.5"
-              >
-                MyQuran • Koleksi Hadis
-              </p>
-            </div>
-          </div>
-          <div class="text-right">
-            <p
-              class="text-[8px] tracking-[0.16em] font-bold text-white/55 leading-none"
-            >
-              AUTO • 15 DETIK
-            </p>
-            <p
-              class="text-[11px] font-mono font-bold mt-0.5 flex items-center gap-1.5 justify-end"
-            >
-              <span
-                class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"
-              ></span>
-              <span id="nextIn">10s</span>
-            </p>
-          </div>
+              class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"
+            ></span>
+            <span id="nextIn">15s</span>
+          </span>
         </div>
       </div>
 
-      <!-- Kartu Instagram: gambar responsif + caption kecil, tanpa hadisCard -->
-      <figure
-        id="igCard"
-        class="hidden w-full shadow-[0_20px_60px_rgba(0,0,0,0.4)] rounded-2xl overflow-hidden border border-white/10 bg-black/45 backdrop-blur"
-      >
-        <img id="igImage" class="hidden" alt="Postingan Instagram" />
-        <figcaption class="px-4 lg:px-6 py-3 lg:py-4">
-          <p id="igTitle" class="text-white font-bold leading-snug"></p>
-          <p id="igCaption" class="text-white/75 mt-1.5"></p>
-          <p
-            id="igMeta"
-            class="text-yellow-300/90 text-[10px] lg:text-[11px] font-semibold mt-2 tracking-wide"
-          ></p>
-        </figcaption>
-      </figure>
-
-      <p
-        class="text-white/50 text-[10px] lg:text-[11px] mt-2.5 lg:mt-3 font-medium tracking-wide text-center"
-      >
-        Hadis & konten ditampilkan otomatis • Sumber @masjiddarulakbar.gko /
-        MyQuran
-      </p>
+      <p class="doa-note">Doa ditampilkan otomatis • Sumber MyQuran</p>
     </main>
 
     <!-- FOOTER JADWAL SHOLAT - style seperti contoh bawah -->
@@ -408,7 +293,6 @@
       </div>
     </div>
 
-    <script src="./config.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

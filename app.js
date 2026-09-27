@@ -296,7 +296,7 @@
     // 2) MyQuran (fallback)
     const endpoints = [
       //'https://api.myquran.com/v2/hadits/koleksi/acak',
-      'https://api.myquran.com/v2/hadits/koleksi/random'
+      'https://api.myquran.com/v2/doa/acak'
     ];
     for(const url of endpoints){
       try{
@@ -304,14 +304,15 @@
         if(!res.ok) continue;
         const json = await res.json();
         if(json.status && json.data){
+          const req = json.request;
           const d = json.data;
           return {
-            title: d.title || 'Hadis Pilihan',
-            hadis: (d.idn && d.idn.hadis) ? d.idn.hadis : d.title,
-            grade: (d.idn && d.idn.grade) ? d.idn.grade : 'Hadis',
+            title: d.title || d.artinya,
+            hadis: d.doa,
+            grade: d.judul,
             attribution: (d.idn && d.idn.attribution) ? d.idn.attribution : 'MyQuran',
-            arab: (d.ar && d.ar.hadis) ? d.ar.hadis : '',
-            source: `No. ${d.id || '-'} • MyQuran`,
+            arab: d.doa,
+            source: `No. ${req.id || '-'} • MyQuran`,
             imageUrl: '',
             mediaType: '',
             sourceType: 'myquran'
